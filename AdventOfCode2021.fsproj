@@ -10,6 +10,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="inputs21-25\d21s.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="inputs21-25\d21.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="inputs16-20\d16.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -115,6 +121,7 @@
     <Compile Include="Day6-10.fs" />
     <Compile Include="Day11-15.fs" />
     <Compile Include="Day16-20.fs" />
+    <Compile Include="Day21-25.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
