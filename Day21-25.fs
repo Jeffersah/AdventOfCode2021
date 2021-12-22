@@ -69,3 +69,85 @@ module Day21 =
         let p1 = parseLine lines.[1]
         let (win,loss) = runDfs {index0 = p0; index1 = p1; score0 = 0; score1 = 0} 1UL
         max win loss
+
+module Day22 =
+    
+    let parseLine (line:string) =
+        let (Some(grps)) = Regex.groups @"(on|off) x=(-?\d+)\.\.(-?\d+),y=(-?\d+)\.\.(-?\d+),z=(-?\d+)\.\.(-?\d+)" line
+        let state = grps.[0].Value = "on"
+        state, int grps.[1].Value, int grps.[2].Value, int grps.[3].Value, int grps.[4].Value, int grps.[5].Value, int grps.[6].Value
+
+
+    let getCells x0 x1 y0 y1 z0 z1 =
+        List.allPairs [y0..y1] [z0..z1] |> List.allPairs [x0..x1] |> List.map (fun (x, (y, z)) -> (x, y, z))
+
+    let runInstr onCells (set, x0, x1, y0, y1, z0, z1) =
+        if x0 > 50 || x1 < -50 || y0 > 50 || y1 < -50 || z0 > 50 || z1 < -50 then onCells
+        else
+            let x0, y0, z0 = max x0 -50, max y0 -50, max z0 -50
+            let x1, y1, z1 = min x1 50, min y1 50, min z1 50
+            let fn = if set then Set.add else Set.remove
+            getCells x0 x1 y0 y1 z0 z1 |> List.fold (fun s v -> fn v s) onCells
+
+    let run (lines: string list) =
+        let instrs = lines |> List.map parseLine
+        instrs |> List.fold runInstr Set.empty |> Set.count
+
+    // Well, I knew this was coming.
+    // PART 2:
+
+    type Range = int64*int64
+    type Cuboid = { x: Range; y: Range; z: Range }
+
+    let isRangeEmpty (min,max) = max<min
+    let isEmpty ({x = x; y = y; z = z}) = isRangeEmpty x || isRangeEmpty y || isRangeEmpty z
+
+    let rangeIntersection (min0, max0) (min1, max1) =
+        let result = (max min0 min1), (min max0 max1)
+        if isRangeEmpty result then None else Some result
+
+    let rangeArea (minv:int64, maxv:int64) = maxv - minv + 1L
+
+    let area ({ x = x; y = y; z = z }:Cuboid) = rangeArea x * rangeArea y * rangeArea z
+
+    let rangeDifference (min0, max0) (min1, max1) =
+        match rangeIntersection (min0, max0) (min1, max1) with
+        | None -> [(min0, max0)]
+        | Some (imin, imax) -> 
+            [(min0, imin - 1L); (imax + 1L, max0)] |> List.where (isRangeEmpty >> not)
+
+    let intersection (a:Cuboid) (b:Cuboid) =
+        match (rangeIntersection a.x b.x, rangeIntersection a.y b.y, rangeIntersection a.z b.z) with
+        | Some x, Some y, Some z -> Some { x=x; y=y; z=z }
+        | _,_,_ -> None
+
+    let difference (a:Cuboid) (b:Cuboid) = 
+        match intersection a b with
+        | None -> [a]
+        | Some i ->
+            let xCuboids = [for xr in rangeDifference a.x b.x do {a with x = xr}] 
+            let yCuboids = [for yr in rangeDifference a.y b.y do {a with x = i.x; y = yr}]
+            let zCuboids = [for zr in rangeDifference a.z b.z do {x = i.x; y = i.y; z = zr}]
+            List.where (isEmpty >> not) (xCuboids @ yCuboids @ zCuboids)
+
+    let parseLine2 (line:string) =
+        let (Some(grps)) = Regex.groups @"(on|off) x=(-?\d+)\.\.(-?\d+),y=(-?\d+)\.\.(-?\d+),z=(-?\d+)\.\.(-?\d+)" line
+        let state = grps.[0].Value = "on"
+        state, { x = (int64 grps.[1].Value, int64 grps.[2].Value); y = (int64 grps.[3].Value, int64 grps.[4].Value); z = (int64 grps.[5].Value, int64 grps.[6].Value)}
+
+    let rec applyActivationLine exclList onRegions cuboid =
+        match exclList with
+        | [] -> cuboid::onRegions
+        | f::r ->
+            let excl = difference cuboid f
+            List.fold (applyActivationLine r) onRegions excl
+
+    let applyLine (exclList, onRegions) (on, cuboid) =
+        match on with
+        | false -> (cuboid::exclList, onRegions)
+        | true -> (cuboid::exclList, applyActivationLine exclList onRegions cuboid)
+
+    let run2 lines =
+        let toRun = lines |> List.rev |> List.map parseLine2
+        let _, on = List.fold applyLine ([], []) toRun
+        on |> List.map area |> List.sum

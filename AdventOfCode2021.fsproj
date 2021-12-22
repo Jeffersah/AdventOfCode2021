@@ -10,6 +10,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="inputs21-25\d22.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="inputs21-25\d22s.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="inputs21-25\d21s.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
