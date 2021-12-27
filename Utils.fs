@@ -101,6 +101,9 @@ module Utils =
             let w,h = size board
             Array2D.init h w (fun x y -> Array2D.get board y x)
 
+        let fill value arr =
+            Array2D.iteri (fun x y _ -> Array2D.set arr x y value) arr
+
 
     module String =
         let split (seperator:string) (str:string) =
@@ -121,6 +124,14 @@ module Utils =
         let indexOf (haystack:string) (needle:string) =
             haystack.IndexOf(needle)
 
+        let padRight (length: int) (padChar: char) (input: string) =
+            let padQty = length - String.length input |> max 0
+            if padQty = 0 then input 
+            else
+                let padding = System.String(padChar, padQty)
+                input + padding
+
+
     module List =
         let splitOn param list =
             let rec splitOnRecurse param list soFar =
@@ -133,6 +144,22 @@ module Utils =
                     else
                         splitOnRecurse param r (soFar @ [f])
             splitOnRecurse param list []
+            
+        let replace i v (list:'a list) =
+            list.[..i-1] @ (v :: list.[i+1..])
+
+        let tryTake i l =
+            List.take (min i (List.length l)) l
+            
+        let trySkip i l =
+            List.skip (min i (List.length l)) l
+
+        let trySplitAt i l =
+            tryTake i l, trySkip i l
+
+        let tryGet i l = 
+            if i >= List.length l || i < 0 then None else Some l.[i]
+
 
     let cache f =
         let cache = new System.Collections.Generic.Dictionary<_,_>()
